@@ -29,11 +29,13 @@ There is **no test suite configured** — no jest/vitest/playwright config and n
 
 `package.json` pins `typescript: ~7.0.2` and `@typescript/typescript6: ~6.0.2`. `typescript-eslint` v8 cannot parse TS7 yet, so the lint script loads `scripts/use-typescript6.cjs` via `NODE_OPTIONS=--require`, which monkey-patches `Module._resolveFilename` to redirect every `require("typescript")` to `@typescript/typescript6`. The shim applies to `pnpm lint` only — `tsc`/`next build` still use the real TS7.
 
-`NODE_OPTIONS='...'` is POSIX syntax. `pnpm` runs scripts through `cmd.exe` on Windows, so **`pnpm lint` fails outright there** with `'NODE_OPTIONS' is not recognized as an internal or external command`. Run ESLint directly instead:
+The lint scripts set `NODE_OPTIONS` through `cross-env` so they behave identically under POSIX shells and Windows `cmd.exe`:
 
-```bash
-node --require ./scripts/use-typescript6.cjs node_modules/eslint/bin/eslint.js .
+```json
+"lint": "cross-env NODE_OPTIONS=\"--require ./scripts/use-typescript6.cjs\" eslint ."
 ```
+
+Keep the value double-quoted. It contains a space, and `cross-env` would otherwise treat the trailing path as a separate argument — which would silently run the shim script itself instead of ESLint, exiting 0 without linting anything.
 
 ## Architecture
 
