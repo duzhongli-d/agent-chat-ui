@@ -170,7 +170,9 @@ export const StreamProvider: React.FC<{ children: ReactNode }> = ({
   );
 
   const finalApiUrl = resolveApiUrl(apiUrl, envApiUrl);
-  const finalAssistantId = assistantId || envAssistantId;
+  // The env var wins over the URL param, matching resolveApiUrl: a deployed
+  // instance must not have its graph swapped by editing the query string.
+  const finalAssistantId = envAssistantId || assistantId;
   const finalAuthScheme = authScheme || envAuthScheme || "";
 
   const apiKey = useMemo(() => getApiKey(finalApiUrl) || "", [finalApiUrl]);

@@ -52,7 +52,8 @@ export function ThreadProvider({ children }: { children: ReactNode }) {
 
   const getThreads = useCallback(async (): Promise<Thread[]> => {
     const finalApiUrl = resolveApiUrl(apiUrl, envApiUrl);
-    const resolvedAssistantId = assistantId || envAssistantId;
+    // Keep in sync with StreamProvider: the env var wins over the URL param.
+    const resolvedAssistantId = envAssistantId || assistantId;
     if (!finalApiUrl || !resolvedAssistantId) return [];
     const client = createClient(
       finalApiUrl,

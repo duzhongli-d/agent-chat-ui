@@ -60,7 +60,8 @@ Config lives in the URL query string via `nuqs` (`useQueryState`), with env vars
 The precedence is **not uniform**, and this is the single most common source of confusion:
 
 - **apiUrl**: `resolveApiUrl(queryApiUrl, envApiUrl)` returns `envApiUrl || queryApiUrl` — the **env var wins** and the URL param is ignored. Intent: a deployed instance pins its backend. Consequence: if `NEXT_PUBLIC_API_URL` is set, the setup form never appears.
-- **assistantId / authScheme**: `queryParam || envVar` — the **query param wins**.
+- **assistantId**: `envAssistantId || assistantId` — the **env var wins**, for the same reason. A deployed instance must not have its graph swapped by editing the query string. The query param still applies when no env var is set, so local dev is unaffected. Note that the setup form still _displays_ the env value but the field is ignored on submit — same as the apiUrl field.
+- **authScheme**: `queryParam || envVar` — the **query param wins**. This one selects which credential format to send (`X-Auth-Scheme`), not which backend scope to use, so a URL override is not a scope escalation.
 
 `authScheme === "langsmith-api-key"` (the "Built with Agent Builder" toggle) adds an `X-Auth-Scheme` header to every request.
 
