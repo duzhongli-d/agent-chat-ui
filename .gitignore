@@ -17,6 +17,8 @@ dist-ssr
 !.vscode/extensions.json
 .idea
 .claude/
+.remember/
+.playwright-mcp/
 .DS_Store
 *.suo
 *.ntvs*
