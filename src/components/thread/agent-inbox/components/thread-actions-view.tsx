@@ -107,13 +107,12 @@ export function ThreadActionsView({
 
   const hasMultipleActions = actionRequests.length > 1;
   const currentAction = actionRequests[currentIndex];
-  const matchingConfig =
-    reviewConfigs.find(
-      (config) => config.action_name === currentAction?.name,
-    ) ?? reviewConfigs[currentIndex];
+  const matchingConfig = reviewConfigs.find(
+    (config) => config.action_name === currentAction?.name,
+  );
 
   const singleActionInterrupt = useMemo(() => {
-    if (!currentAction || !matchingConfig) {
+    if (!currentAction) {
       return interrupt;
     }
 
@@ -121,7 +120,9 @@ export function ThreadActionsView({
       ...interrupt,
       value: {
         action_requests: [currentAction],
-        review_configs: [matchingConfig],
+        // An unmatched action gets no review config, so no decisions are
+        // permitted for it.
+        review_configs: matchingConfig ? [matchingConfig] : [],
       },
     };
   }, [interrupt, currentAction, matchingConfig]);
@@ -386,22 +387,33 @@ export function ThreadActionsView({
         </div>
       )}
 
-      <InboxItemInput
-        approveAllowed={approveAllowed}
-        hasEdited={hasEdited}
-        hasAddedResponse={hasAddedResponse}
-        interruptValue={interruptValue}
-        humanResponse={humanResponse}
-        initialValues={initialHumanInterruptEditValue.current}
-        setHumanResponse={setHumanResponse}
-        supportsMultipleMethods={supportsMultipleMethods}
-        setSelectedSubmitType={setSelectedSubmitType}
-        setHasAddedResponse={setHasAddedResponse}
-        setHasEdited={setHasEdited}
-        handleSubmit={hasMultipleActions ? handleSaveDecision : handleSubmit}
-        isLoading={hasMultipleActions ? submittingAll : loading}
-        selectedSubmitType={selectedSubmitType}
-      />
+      {matchingConfig ? (
+        <InboxItemInput
+          approveAllowed={approveAllowed}
+          hasEdited={hasEdited}
+          hasAddedResponse={hasAddedResponse}
+          interruptValue={interruptValue}
+          humanResponse={humanResponse}
+          initialValues={initialHumanInterruptEditValue.current}
+          setHumanResponse={setHumanResponse}
+          supportsMultipleMethods={supportsMultipleMethods}
+          setSelectedSubmitType={setSelectedSubmitType}
+          setHasAddedResponse={setHasAddedResponse}
+          setHasEdited={setHasEdited}
+          handleSubmit={hasMultipleActions ? handleSaveDecision : handleSubmit}
+          isLoading={hasMultipleActions ? submittingAll : loading}
+          selectedSubmitType={selectedSubmitType}
+        />
+      ) : (
+        <div className="flex w-full flex-col items-center justify-center rounded-2xl bg-gray-50/50 p-8">
+          <p className="text-sm text-gray-600">
+            No review configuration was provided for{" "}
+            <strong>{getActionTitle(currentAction)}</strong>, so this action
+            cannot be approved, edited, or rejected. Mark the thread as resolved
+            to dismiss it.
+          </p>
+        </div>
+      )}
 
       {hasMultipleActions && (
         <div className="flex w-full items-center justify-between">

@@ -98,10 +98,11 @@ export function createDefaultHumanResponse(
 } {
   const responses: DecisionWithEdits[] = [];
   const actionRequest = hitlRequest.action_requests?.[0];
-  const reviewConfig =
-    hitlRequest.review_configs?.find(
-      (config) => config.action_name === actionRequest?.name,
-    ) ?? hitlRequest.review_configs?.[0];
+  // Require an exact match. Falling back to another action's review config
+  // would grant decisions that were never permitted for this action.
+  const reviewConfig = hitlRequest.review_configs?.find(
+    (config) => config.action_name === actionRequest?.name,
+  );
 
   if (!actionRequest || !reviewConfig) {
     return { responses: [], defaultSubmitType: undefined, hasApprove: false };

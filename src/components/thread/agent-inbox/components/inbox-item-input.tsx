@@ -325,9 +325,12 @@ export function InboxItemInput({
   setHasEdited,
   handleSubmit,
 }: InboxItemInputProps) {
-  const allowedDecisions =
-    interruptValue.review_configs?.[0]?.allowed_decisions ?? [];
   const actionRequest = interruptValue.action_requests?.[0];
+  // Only the config that names this action may grant decisions for it.
+  const allowedDecisions =
+    interruptValue.review_configs?.find(
+      (config) => config.action_name === actionRequest?.name,
+    )?.allowed_decisions ?? [];
   const actionArgs = actionRequest?.args ?? {};
   const isEditAllowed = allowedDecisions.includes("edit");
   const isRejectAllowed = allowedDecisions.includes("reject");

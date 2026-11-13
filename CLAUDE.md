@@ -29,7 +29,11 @@ There is **no test suite configured** — no jest/vitest/playwright config and n
 
 `package.json` pins `typescript: ~7.0.2` and `@typescript/typescript6: ~6.0.2`. `typescript-eslint` v8 cannot parse TS7 yet, so the lint script loads `scripts/use-typescript6.cjs` via `NODE_OPTIONS=--require`, which monkey-patches `Module._resolveFilename` to redirect every `require("typescript")` to `@typescript/typescript6`. The shim applies to `pnpm lint` only — `tsc`/`next build` still use the real TS7.
 
-`NODE_OPTIONS='...'` is POSIX syntax: it works in Git Bash/WSL but breaks in Windows `cmd`/PowerShell. On Windows use `pnpm exec eslint .` with the shim set manually, or run under a POSIX shell.
+`NODE_OPTIONS='...'` is POSIX syntax. `pnpm` runs scripts through `cmd.exe` on Windows, so **`pnpm lint` fails outright there** with `'NODE_OPTIONS' is not recognized as an internal or external command`. Run ESLint directly instead:
+
+```bash
+node --require ./scripts/use-typescript6.cjs node_modules/eslint/bin/eslint.js .
+```
 
 ## Architecture
 
@@ -46,12 +50,12 @@ The whole app is a single client page wrapped in three providers, in this order:
 
 Config lives in the URL query string via `nuqs` (`useQueryState`), with env vars as defaults:
 
-| Query param   | Env var                   | Default shown in setup form |
-| ------------- | ------------------------- | --------------------------- |
-| `apiUrl`      | `NEXT_PUBLIC_API_URL`     | `http://localhost:2024`     |
-| `assistantId` | `NEXT_PUBLIC_ASSISTANT_ID`| `agent`                     |
-| `authScheme`  | `NEXT_PUBLIC_AUTH_SCHEME` | `""`                        |
-| `threadId`    | —                         | —                           |
+| Query param   | Env var                    | Default shown in setup form |
+| ------------- | -------------------------- | --------------------------- |
+| `apiUrl`      | `NEXT_PUBLIC_API_URL`      | `http://localhost:2024`     |
+| `assistantId` | `NEXT_PUBLIC_ASSISTANT_ID` | `agent`                     |
+| `authScheme`  | `NEXT_PUBLIC_AUTH_SCHEME`  | `""`                        |
+| `threadId`    | —                          | —                           |
 
 The precedence is **not uniform**, and this is the single most common source of confusion:
 
@@ -81,6 +85,8 @@ Two interrupt shapes are supported and must be distinguished:
 - **Generic** — anything else, rendered by `src/components/thread/messages/generic-interrupt.tsx`.
 
 Interrupts are only surfaced on the last message, or when there are no AI/tool messages at all (`src/components/thread/messages/ai.tsx`).
+
+**HITL review configs are matched by exact `action_name` and fail closed.** An action request whose name has no matching entry in `review_configs` gets no permitted decisions — the UI renders an explanatory message instead of approve/edit/reject buttons, and the only way past it is "Mark as Resolved" (`command: { goto: END }`, which ends the run without executing the action). Do not reintroduce an index-based fallback (`review_configs[0]`, `reviewConfigs[currentIndex]`): applying one action's policy to a different action silently grants decisions that were never permitted for it, which defeats the point of the human gate. Three sites must stay consistent — `agent-inbox/utils.ts` (`createDefaultHumanResponse`), `agent-inbox/components/thread-actions-view.tsx` (`matchingConfig`), and `agent-inbox/components/inbox-item-input.tsx` (`allowedDecisions`).
 
 ### Message rendering
 
