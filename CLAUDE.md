@@ -127,4 +127,4 @@ These are read from the README but enforced in the client, so keep them in sync 
 - Prettier uses `singleAttributePerLine: true` and `prettier-plugin-tailwindcss` (class order is auto-sorted).
 - ESLint: `react-hooks/refs` and `react-hooks/set-state-in-effect` are **warnings**, not errors — but they flag real React Compiler / effect-pattern problems; prefer fixing them over silencing.
 - Unused bindings are prefixed with `_` (eslint `varsIgnorePattern: "^_"`).
-- Theme is CSS-variable driven (`src/app/globals.css`, `tailwind.config.js`).
+- Theme is CSS-variable driven (`src/app/globals.css`). Tailwind v4 CSS-first setup — there is no `tailwind.config.js`; theme values, the dark variant, and plugins are declared in `globals.css` (`@theme inline`, `@custom-variant`, `@plugin`).
