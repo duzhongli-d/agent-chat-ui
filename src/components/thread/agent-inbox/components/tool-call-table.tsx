@@ -1,7 +1,10 @@
 import { ToolCall } from "@langchain/core/messages/tool";
-import { unknownToPrettyDate } from "../utils";
+import { useFormatter } from "next-intl";
+import { unknownToDate } from "../utils";
 
 export function ToolCallTable({ toolCall }: { toolCall: ToolCall }) {
+  const format = useFormatter();
+
   return (
     <div className="max-w-full min-w-[300px] overflow-hidden rounded-lg border">
       <table className="w-full border-collapse">
@@ -22,9 +25,15 @@ export function ToolCallTable({ toolCall }: { toolCall: ToolCall }) {
               valueStr = value.toString();
             }
 
-            const date = unknownToPrettyDate(value);
+            const date = unknownToDate(value);
             if (date) {
-              valueStr = date;
+              valueStr = format.dateTime(date, {
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit",
+              });
             }
 
             try {

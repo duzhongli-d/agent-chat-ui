@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Interrupt } from "@langchain/langgraph-sdk";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { ThreadIdCopyable } from "./thread-id";
 import { InboxItemInput } from "./inbox-item-input";
@@ -29,6 +30,8 @@ function ButtonGroup({
   showingState: boolean;
   showingDescription: boolean;
 }) {
+  const t = useTranslations("inbox");
+
   return (
     <div className="flex flex-row items-center justify-center gap-0">
       <Button
@@ -40,7 +43,7 @@ function ButtonGroup({
         size="sm"
         onClick={handleShowState}
       >
-        State
+        {t("state")}
       </Button>
       <Button
         variant="outline"
@@ -51,7 +54,7 @@ function ButtonGroup({
         size="sm"
         onClick={handleShowDescription}
       >
-        Description
+        {t("description")}
       </Button>
     </div>
   );
@@ -76,8 +79,14 @@ function getDecisionStatus(
   return decision.type;
 }
 
-function getActionTitle(action?: ActionRequest) {
-  return action?.name ?? "Unknown interrupt";
+/**
+ * The action's name, as supplied by the server.
+ *
+ * The name stays in the server's own vocabulary — only the fallback, which the
+ * app owns, is translated.
+ */
+function getActionTitle(action: ActionRequest | undefined, fallback: string) {
+  return action?.name ?? fallback;
 }
 
 export function ThreadActionsView({
@@ -86,6 +95,8 @@ export function ThreadActionsView({
   showDescription,
   showState,
 }: ThreadActionsViewProps) {
+  const t = useTranslations("inbox");
+  const tErrors = useTranslations("errors");
   const stream = useStreamContext();
   const [threadId] = useQueryState("threadId");
   const [apiUrl] = useQueryState("apiUrl");
@@ -155,8 +166,8 @@ export function ThreadActionsView({
 
   const handleOpenInStudio = () => {
     if (!apiUrl) {
-      toast.error("Error", {
-        description: "Please set the LangGraph deployment URL in settings.",
+      toast.error(t("error"), {
+        description: tErrors("missingApiUrl"),
         duration: 5000,
         richColors: true,
         closeButton: true,
@@ -185,27 +196,27 @@ export function ThreadActionsView({
         },
       );
 
-      toast("Success", {
-        description: "All actions approved successfully.",
+      toast(t("success"), {
+        description: tErrors("approveAllSuccess"),
         duration: 5000,
       });
     } catch (error) {
       console.error("Error approving all actions", error);
-      toast.error("Error", {
-        description: "Failed to approve all actions.",
+      toast.error(t("error"), {
+        description: tErrors("approveAllFailed"),
         richColors: true,
         closeButton: true,
         duration: 5000,
       });
     }
-  }, [actionRequests, hasMultipleActions, stream]);
+  }, [actionRequests, hasMultipleActions, stream, t, tErrors]);
 
   const handleSubmitAll = useCallback(() => {
     if (!hasMultipleActions) return;
 
     if (addressedActions.size !== actionRequests.length) {
-      toast.error("Error", {
-        description: `Please address all ${actionRequests.length} actions before submitting.`,
+      toast.error(t("error"), {
+        description: t("addressAllActions", { count: actionRequests.length }),
         richColors: true,
         closeButton: true,
         duration: 5000,
@@ -232,15 +243,15 @@ export function ThreadActionsView({
         },
       );
 
-      toast("Success", {
-        description: "All actions submitted successfully.",
+      toast(t("success"), {
+        description: tErrors("submitAllSuccess"),
         duration: 5000,
       });
       setAddressedActions(new Map());
     } catch (error) {
       console.error("Error submitting all actions", error);
-      toast.error("Error", {
-        description: "Failed to submit actions.",
+      toast.error(t("error"), {
+        description: tErrors("submitAllFailed"),
         richColors: true,
         closeButton: true,
         duration: 5000,
@@ -248,7 +259,14 @@ export function ThreadActionsView({
     } finally {
       setSubmittingAll(false);
     }
-  }, [actionRequests, addressedActions, hasMultipleActions, stream]);
+  }, [
+    actionRequests,
+    addressedActions,
+    hasMultipleActions,
+    stream,
+    t,
+    tErrors,
+  ]);
 
   const allAllowApprove = useMemo(() => {
     if (!hasMultipleActions) return false;
@@ -261,14 +279,16 @@ export function ThreadActionsView({
   }, [actionRequests, reviewConfigs, hasMultipleActions]);
 
   const handleSaveDecision = () => {
-    const { decision, error } = buildDecisionFromState(
+    const { decision, errorCode } = buildDecisionFromState(
       humanResponse,
       selectedSubmitType,
     );
 
-    if (!decision || error) {
-      toast.error("Error", {
-        description: error ?? "Unable to determine decision.",
+    if (!decision || errorCode) {
+      toast.error(t("error"), {
+        description: errorCode
+          ? tErrors(errorCode)
+          : tErrors("unknownDecision"),
         richColors: true,
         closeButton: true,
         duration: 5000,
@@ -282,8 +302,8 @@ export function ThreadActionsView({
       return next;
     });
 
-    toast("Success", {
-      description: `Action ${currentIndex + 1} captured.`,
+    toast(t("success"), {
+      description: t("actionCaptured", { index: currentIndex + 1 }),
       duration: 3000,
     });
 
@@ -292,7 +312,7 @@ export function ThreadActionsView({
     }
   };
 
-  const currentTitle = getActionTitle(currentAction);
+  const currentTitle = getActionTitle(currentAction, t("unknownInterrupt"));
   const actionsDisabled = loading || streaming || submittingAll;
   const hasAllDecisions =
     hasMultipleActions && addressedActions.size === actionRequests.length;
@@ -300,10 +320,7 @@ export function ThreadActionsView({
   if (!isValidHitlRequest(interrupt)) {
     return (
       <div className="flex min-h-full w-full flex-col items-center justify-center rounded-2xl bg-gray-50/50 p-8">
-        <p className="text-sm text-gray-600">
-          Unable to render interrupt. The data provided is not in the expected
-          HITL format.
-        </p>
+        <p className="text-sm text-gray-600">{t("invalidFormat")}</p>
       </div>
     );
   }
@@ -315,7 +332,11 @@ export function ThreadActionsView({
         <div className="flex items-center justify-start gap-3">
           <p className="text-2xl tracking-tighter text-pretty">
             {hasMultipleActions
-              ? `${currentTitle} (${currentIndex + 1}/${actionRequests.length})`
+              ? t("actionsCount", {
+                  title: currentTitle,
+                  current: currentIndex + 1,
+                  total: actionRequests.length,
+                })
               : currentTitle}
           </p>
           {threadId && <ThreadIdCopyable threadId={threadId} />}
@@ -328,7 +349,7 @@ export function ThreadActionsView({
               className="flex items-center gap-1 bg-white"
               onClick={handleOpenInStudio}
             >
-              Studio
+              {t("studio")}
             </Button>
           )}
           <ButtonGroup
@@ -347,7 +368,7 @@ export function ThreadActionsView({
           onClick={handleResolve}
           disabled={actionsDisabled}
         >
-          Mark as Resolved
+          {t("markAsResolved")}
         </Button>
         {hasMultipleActions && allAllowApprove && (
           <Button
@@ -356,7 +377,7 @@ export function ThreadActionsView({
             onClick={handleApproveAll}
             disabled={actionsDisabled}
           >
-            Approve All
+            {t("approveAll")}
           </Button>
         )}
       </div>
@@ -380,7 +401,9 @@ export function ThreadActionsView({
                     "outline-primary outline-2 outline-offset-2",
                 )}
               >
-                <span className="sr-only">Action {index + 1}</span>
+                <span className="sr-only">
+                  {t("actionIndex", { index: index + 1 })}
+                </span>
               </button>
             );
           })}
@@ -406,11 +429,15 @@ export function ThreadActionsView({
         />
       ) : (
         <div className="flex w-full flex-col items-center justify-center rounded-2xl bg-gray-50/50 p-8">
+          {/* Fail closed: an action with no matching review config gets no
+              decision buttons at all. Only this message and "Mark as Resolved"
+              are offered. `<strong>` is the rich-text tag; `{actionName}` is a
+              plain placeholder, so the two take different kinds of value. */}
           <p className="text-sm text-gray-600">
-            No review configuration was provided for{" "}
-            <strong>{getActionTitle(currentAction)}</strong>, so this action
-            cannot be approved, edited, or rejected. Mark the thread as resolved
-            to dismiss it.
+            {t.rich("noReviewConfig", {
+              strong: (chunks) => <strong>{chunks}</strong>,
+              actionName: getActionTitle(currentAction, t("unknownInterrupt")),
+            })}
           </p>
         </div>
       )}
@@ -424,7 +451,7 @@ export function ThreadActionsView({
               disabled={currentIndex === 0}
               onClick={() => setCurrentIndex((prev) => Math.max(0, prev - 1))}
             >
-              Previous
+              {t("previous")}
             </Button>
             <Button
               variant="outline"
@@ -436,7 +463,7 @@ export function ThreadActionsView({
                 )
               }
             >
-              Next
+              {t("next")}
             </Button>
           </div>
           <Button
@@ -445,16 +472,14 @@ export function ThreadActionsView({
             onClick={handleSubmitAll}
           >
             {submittingAll
-              ? "Submitting..."
-              : `Submit all ${actionRequests.length} decisions`}
+              ? t("submitting")
+              : t("submitAll", { count: actionRequests.length })}
           </Button>
         </div>
       )}
 
       {!hasMultipleActions && streamFinished && (
-        <p className="text-base font-medium text-green-600">
-          Successfully finished Graph invocation.
-        </p>
+        <p className="text-base font-medium text-green-600">{t("finished")}</p>
       )}
     </div>
   );

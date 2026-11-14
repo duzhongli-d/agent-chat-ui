@@ -1,6 +1,7 @@
 import { useStreamContext } from "@/providers/Stream";
 import { END } from "@langchain/langgraph/web";
 import { Interrupt } from "@langchain/langgraph-sdk";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {
   Dispatch,
@@ -44,6 +45,8 @@ interface UseInterruptedActionsValue {
 export default function useInterruptedActions({
   interrupt,
 }: UseInterruptedActionsInput): UseInterruptedActionsValue {
+  const t = useTranslations("inbox");
+  const tErrors = useTranslations("errors");
   const thread = useStreamContext();
   const [humanResponse, setHumanResponse] = useState<DecisionWithEdits[]>([]);
   const [loading, setLoading] = useState(false);
@@ -107,14 +110,14 @@ export default function useInterruptedActions({
     e: React.MouseEvent<HTMLButtonElement, MouseEvent> | KeyboardEvent,
   ) => {
     e.preventDefault();
-    const { decision, error } = buildDecisionFromState(
+    const { decision, errorCode } = buildDecisionFromState(
       humanResponse,
       selectedSubmitType,
     );
 
     if (!decision) {
-      toast.error("Error", {
-        description: error ?? "Unsupported response type.",
+      toast.error(t("error"), {
+        description: tErrors(errorCode ?? "unknownType"),
         duration: 5000,
         richColors: true,
         closeButton: true,
@@ -122,9 +125,9 @@ export default function useInterruptedActions({
       return;
     }
 
-    if (error) {
-      toast.error("Error", {
-        description: error,
+    if (errorCode) {
+      toast.error(t("error"), {
+        description: tErrors(errorCode),
         duration: 5000,
         richColors: true,
         closeButton: true,
@@ -145,8 +148,8 @@ export default function useInterruptedActions({
         return;
       }
 
-      toast("Success", {
-        description: "Response submitted successfully.",
+      toast(t("success"), {
+        description: tErrors("submitSuccess"),
         duration: 5000,
       });
 
@@ -156,16 +159,15 @@ export default function useInterruptedActions({
       errorOccurred = true;
 
       if ("message" in error && error.message.includes("Invalid assistant")) {
-        toast("Error: Invalid assistant ID", {
-          description:
-            "The provided assistant ID was not found in this graph. Please update the assistant ID in the settings and try again.",
+        toast(tErrors("invalidAssistant"), {
+          description: tErrors("invalidAssistantHelp"),
           richColors: true,
           closeButton: true,
           duration: 5000,
         });
       } else {
-        toast.error("Error", {
-          description: "Failed to submit response.",
+        toast.error(t("error"), {
+          description: tErrors("submitFailed"),
           richColors: true,
           closeButton: true,
           duration: 5000,
@@ -197,14 +199,14 @@ export default function useInterruptedActions({
         },
       );
 
-      toast("Success", {
-        description: "Marked thread as resolved.",
+      toast(t("success"), {
+        description: tErrors("resolveSuccess"),
         duration: 3000,
       });
     } catch (error) {
       console.error("Error marking thread as resolved", error);
-      toast.error("Error", {
-        description: "Failed to mark thread as resolved.",
+      toast.error(t("error"), {
+        description: tErrors("resolveFailed"),
         richColors: true,
         closeButton: true,
         duration: 3000,

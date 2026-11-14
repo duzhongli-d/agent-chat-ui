@@ -4,8 +4,9 @@ import {
   baseMessageObject,
   isArrayOfMessages,
   prettifyText,
-  unknownToPrettyDate,
+  unknownToDate,
 } from "../utils";
+import { useFormatter, useTranslations } from "next-intl";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { BaseMessage } from "@langchain/core/messages";
@@ -19,7 +20,14 @@ interface StateViewRecursiveProps {
   expanded?: boolean;
 }
 
-const messageTypeToLabel = (message: BaseMessage) => {
+/**
+ * The message type mapped to a key in the `state` message namespace.
+ *
+ * A key rather than a label, because the label is translated by the component.
+ */
+const messageTypeToKey = (
+  message: BaseMessage,
+): "user" | "assistant" | "tool" | "system" | null => {
   let type = "";
   if ("type" in message) {
     type = message.type as string;
@@ -29,23 +37,26 @@ const messageTypeToLabel = (message: BaseMessage) => {
 
   switch (type) {
     case "human":
-      return "User";
+      return "user";
     case "ai":
-      return "Assistant";
+      return "assistant";
     case "tool":
-      return "Tool";
+      return "tool";
     case "System":
-      return "System";
+      return "system";
     default:
-      return "";
+      return null;
   }
 };
 
 function MessagesRenderer({ messages }: { messages: BaseMessage[] }) {
+  const t = useTranslations("state");
+
   return (
     <div className="flex w-full flex-col gap-1">
       {messages.map((msg, idx) => {
-        const messageTypeLabel = messageTypeToLabel(msg);
+        const messageTypeKey = messageTypeToKey(msg);
+        const messageTypeLabel = messageTypeKey ? t(messageTypeKey) : "";
         const content =
           typeof msg.content === "string"
             ? msg.content
@@ -75,9 +86,20 @@ function MessagesRenderer({ messages }: { messages: BaseMessage[] }) {
 }
 
 function StateViewRecursive(props: StateViewRecursiveProps) {
-  const date = unknownToPrettyDate(props.value);
+  const format = useFormatter();
+  const date = unknownToDate(props.value);
   if (date) {
-    return <p className="font-light text-gray-600">{date}</p>;
+    return (
+      <p className="font-light text-gray-600">
+        {format.dateTime(date, {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+        })}
+      </p>
+    );
   }
 
   if (["string", "number"].includes(typeof props.value)) {
@@ -240,10 +262,11 @@ export function StateView({
   values,
   description,
 }: StateViewComponentProps) {
+  const t = useTranslations("state");
   const [expanded, setExpanded] = useState(false);
 
   if (!values) {
-    return <div>No state found</div>;
+    return <div>{t("noState")}</div>;
   }
 
   return (
@@ -256,9 +279,7 @@ export function StateView({
     >
       {view === "description" && (
         <div className="pt-6 pb-2">
-          <MarkdownText>
-            {description ?? "No description provided"}
-          </MarkdownText>
+          <MarkdownText>{description ?? t("noDescription")}</MarkdownText>
         </div>
       )}
       {view === "state" && (

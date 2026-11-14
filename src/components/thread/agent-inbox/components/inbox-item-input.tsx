@@ -4,11 +4,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Undo2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { MarkdownText } from "../../markdown-text";
 import { haveArgsChanged, prettifyText } from "../utils";
 import { toast } from "sonner";
 
 function ResetButton({ handleReset }: { handleReset: () => void }) {
+  const t = useTranslations("inbox");
+
   return (
     <Button
       onClick={handleReset}
@@ -16,7 +19,7 @@ function ResetButton({ handleReset }: { handleReset: () => void }) {
       className="flex items-center justify-center gap-2 text-gray-500 hover:text-red-500"
     >
       <Undo2 className="h-4 w-4" />
-      <span>Reset</span>
+      <span>{t("reset")}</span>
     </Button>
   );
 }
@@ -82,6 +85,8 @@ function ApproveOnly({
     e: React.MouseEvent<HTMLButtonElement, MouseEvent> | React.KeyboardEvent,
   ) => Promise<void> | void;
 }) {
+  const tDecisions = useTranslations("decisions");
+
   return (
     <div className="flex w-full flex-col items-start gap-4 rounded-lg border border-gray-300 p-6">
       {Object.keys(actionRequestArgs).length > 0 && (
@@ -93,7 +98,7 @@ function ApproveOnly({
         onClick={handleSubmit}
         className="w-full"
       >
-        Approve
+        {tDecisions("approve")}
       </Button>
     </div>
   );
@@ -120,6 +125,8 @@ function EditActionCard({
     e: React.MouseEvent<HTMLButtonElement, MouseEvent> | React.KeyboardEvent,
   ) => Promise<void> | void;
 }) {
+  const t = useTranslations("inbox");
+  const tDecisions = useTranslations("decisions");
   const defaultRows = React.useRef<Record<string, number>>({});
   const editResponse = humanResponse.find(
     (response) => response.type === "edit",
@@ -146,11 +153,11 @@ function EditActionCard({
     return null;
   }
 
-  const header = editResponse.acceptAllowed ? "Edit/Approve" : "Edit";
+  const header = editResponse.acceptAllowed ? t("editApprove") : t("edit");
   const buttonText =
     editResponse.acceptAllowed && !editResponse.editsMade
-      ? "Approve"
-      : "Submit";
+      ? tDecisions("approve")
+      : t("submit");
 
   const handleReset = () => {
     if (!editResponse.edited_action?.args) {
@@ -258,6 +265,8 @@ function RejectActionCard({
   showArgs: boolean;
   actionArgs: Record<string, unknown>;
 }) {
+  const t = useTranslations("inbox");
+  const tDecisions = useTranslations("decisions");
   const rejectResponse = humanResponse.find(
     (response) => response.type === "reject",
   );
@@ -276,14 +285,16 @@ function RejectActionCard({
   return (
     <div className="flex w-full max-w-full flex-col items-start gap-4 rounded-xl border border-gray-300 p-6">
       <div className="flex w-full items-center justify-between">
-        <p className="text-base font-semibold text-black">Reject</p>
+        <p className="text-base font-semibold text-black">
+          {tDecisions("reject")}
+        </p>
         <ResetButton handleReset={() => onChange("", rejectResponse)} />
       </div>
 
       {showArgs && <ArgsRenderer args={actionArgs} />}
 
       <div className="flex w-full flex-col items-start gap-[6px]">
-        <p className="min-w-fit text-sm font-medium">Reason</p>
+        <p className="min-w-fit text-sm font-medium">{t("reason")}</p>
         <Textarea
           disabled={isLoading}
           className="w-full max-w-full"
@@ -291,7 +302,7 @@ function RejectActionCard({
           onChange={(event) => onChange(event.target.value, rejectResponse)}
           onKeyDown={handleKeyDown}
           rows={4}
-          placeholder="Share feedback with the agent..."
+          placeholder={t("rejectPlaceholder")}
         />
       </div>
 
@@ -301,7 +312,7 @@ function RejectActionCard({
           disabled={isLoading}
           onClick={handleSubmit}
         >
-          Submit rejection
+          {t("submitRejection")}
         </Button>
       </div>
     </div>
@@ -325,6 +336,7 @@ export function InboxItemInput({
   setHasEdited,
   handleSubmit,
 }: InboxItemInputProps) {
+  const t = useTranslations("inbox");
   const actionRequest = interruptValue.action_requests?.[0];
   // Only the config that names this action may grant decisions for it.
   const allowedDecisions =
@@ -349,8 +361,8 @@ export function InboxItemInput({
       (Array.isArray(change) && !Array.isArray(key)) ||
       (!Array.isArray(change) && Array.isArray(key))
     ) {
-      toast.error("Error", {
-        description: "Unable to update edited values.",
+      toast.error(t("error"), {
+        description: t("updateValuesFailed"),
         richColors: true,
         closeButton: true,
       });
@@ -474,7 +486,7 @@ export function InboxItemInput({
         {supportsMultipleMethods ? (
           <div className="mx-auto mt-3 flex items-center gap-3">
             <Separator className="w-full" />
-            <p className="text-sm text-gray-500">Or</p>
+            <p className="text-sm text-gray-500">{t("or")}</p>
             <Separator className="w-full" />
           </div>
         ) : null}
@@ -489,11 +501,13 @@ export function InboxItemInput({
         />
 
         {isLoading && (
-          <p className="text-sm text-gray-600">Submitting decision...</p>
+          <p className="text-sm text-gray-600">{t("submittingDecision")}</p>
         )}
         {selectedSubmitType && supportsMultipleMethods && (
           <p className="text-xs text-gray-500">
-            Currently selected: {prettifyText(selectedSubmitType)}
+            {t("currentlySelected", {
+              value: prettifyText(selectedSubmitType),
+            })}
           </p>
         )}
       </div>

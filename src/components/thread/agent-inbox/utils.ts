@@ -1,5 +1,4 @@
 import { BaseMessage, isBaseMessage } from "@langchain/core/messages";
-import { format } from "date-fns";
 import { startCase } from "lodash";
 import {
   Action,
@@ -72,14 +71,22 @@ export function baseMessageObject(item: unknown): string {
   }
 }
 
-export function unknownToPrettyDate(input: unknown): string | undefined {
+/**
+ * Parse an unknown value into a `Date`, or `undefined` when it is not a date.
+ *
+ * This module is plain JavaScript, so it cannot call `useFormatter()`. It returns
+ * the raw `Date` and lets the caller format it for the active locale.
+ */
+export function unknownToDate(input: unknown): Date | undefined {
   try {
-    if (
-      Object.prototype.toString.call(input) === "[object Date]" ||
-      new Date(input as string)
-    ) {
-      return format(new Date(input as string), "MM/dd/yyyy hh:mm a");
+    const date =
+      Object.prototype.toString.call(input) === "[object Date]"
+        ? (input as Date)
+        : new Date(input as string);
+    if (Number.isNaN(date.getTime())) {
+      return undefined;
     }
+    return date;
   } catch (_) {
     // failed to parse date. no-op
   }
@@ -159,12 +166,22 @@ export function createDefaultHumanResponse(
   return { responses, defaultSubmitType, hasApprove };
 }
 
+/**
+ * The reason a decision could not be built.
+ *
+ * A stable code rather than a sentence, because this module is plain JavaScript:
+ * it cannot call the `useTranslations()` hook. The wording lives in the `errors`
+ * message namespace and is raised by the caller as `t(`errors.${errorCode}`)`.
+ */
+export type DecisionErrorCode =
+  "noResponse" | "emptyResponse" | "unknownType" | "missingEdit";
+
 export function buildDecisionFromState(
   responses: DecisionWithEdits[],
   selectedSubmitType: SubmitType | undefined,
-): { decision?: Decision; error?: string } {
+): { decision?: Decision; errorCode?: DecisionErrorCode } {
   if (!responses.length) {
-    return { error: "Please enter a response." };
+    return { errorCode: "noResponse" };
   }
 
   const selectedDecision = responses.find(
@@ -172,7 +189,7 @@ export function buildDecisionFromState(
   );
 
   if (!selectedDecision) {
-    return { error: "No response selected." };
+    return { errorCode: "emptyResponse" };
   }
 
   if (selectedDecision.type === "approve") {
@@ -182,7 +199,7 @@ export function buildDecisionFromState(
   if (selectedDecision.type === "reject") {
     const message = selectedDecision.message?.trim();
     if (!message) {
-      return { error: "Please provide a rejection reason." };
+      return { errorCode: "missingEdit" };
     }
     return { decision: { type: "reject", message } };
   }
@@ -200,7 +217,7 @@ export function buildDecisionFromState(
     };
   }
 
-  return { error: "Unsupported response type." };
+  return { errorCode: "unknownType" };
 }
 
 export function constructOpenInStudioURL(

@@ -6,6 +6,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import React from "react";
+import { useTranslations } from "next-intl";
 import { motion, AnimatePresence } from "framer-motion";
 import { TooltipIconButton } from "../../tooltip-icon-button";
 
@@ -37,6 +38,7 @@ export function ThreadIdCopyable({
   showUUID?: boolean;
 }) {
   const [copied, setCopied] = React.useState(false);
+  const t = useTranslations("inbox");
 
   const handleCopy = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     e.stopPropagation();
@@ -49,10 +51,12 @@ export function ThreadIdCopyable({
     <TooltipIconButton
       onClick={(e) => handleCopy(e)}
       variant="ghost"
-      tooltip="Copy thread ID"
+      tooltip={t("copyThreadId")}
       className="flex w-fit flex-grow-0 cursor-pointer items-center gap-1 rounded-md border-[1px] border-gray-200 p-1 hover:bg-gray-50/90"
     >
-      <p className="font-mono text-xs">{showUUID ? threadId : "ID"}</p>
+      <p className="font-mono text-xs">
+        {showUUID ? threadId : t("threadIdLabel")}
+      </p>
       <AnimatePresence
         mode="wait"
         initial={false}

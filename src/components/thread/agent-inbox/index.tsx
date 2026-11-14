@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Interrupt } from "@langchain/langgraph-sdk";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { useStreamContext } from "@/providers/Stream";
 import { HITLRequest } from "./types";
@@ -11,6 +12,7 @@ interface ThreadViewProps {
 }
 
 export function ThreadView({ interrupt }: ThreadViewProps) {
+  const t = useTranslations("inbox");
   const thread = useStreamContext();
   const interrupts = useMemo(
     () =>
@@ -70,9 +72,11 @@ export function ThreadView({ interrupt }: ThreadViewProps) {
           {interrupts.length > 1 && (
             <div className="flex flex-wrap items-center gap-2">
               {interrupts.map((it, idx) => {
+                // The action name is supplied by the server and stays in the
+                // server's own vocabulary; only the app-owned fallback is translated.
                 const title =
                   it.value?.action_requests?.[0]?.name ??
-                  `Interrupt ${idx + 1}`;
+                  t("interruptIndex", { index: idx + 1 });
                 return (
                   <button
                     key={it.id ?? idx}
