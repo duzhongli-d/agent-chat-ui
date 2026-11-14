@@ -29,6 +29,8 @@ export const en = {
     apiKey: "LangSmith API Key",
     apiKeyHelp:
       "This is <not>NOT</not> required if using a local LangGraph server. This value is stored in your browser's local storage and is only used to authenticate requests sent to your LangGraph server.",
+    showPassword: "Show password",
+    hidePassword: "Hide password",
     agentBuilder: "Built with Agent Builder",
     agentBuilderHelp: "Enable this for Agent Builder deployments.",
     continue: "Continue",

@@ -39,6 +39,8 @@ export const zhCN = {
     apiKey: "LangSmith API Key",
     apiKeyHelp:
       "使用本地 LangGraph 服务器时<not>不需要</not>填写此项。该值仅保存在浏览器的 local storage 中，只用于向你的 LangGraph 服务器发送认证请求。",
+    showPassword: "显示密码",
+    hidePassword: "隐藏密码",
     agentBuilder: "由 Agent Builder 构建",
     agentBuilderHelp: "为 Agent Builder 部署启用此选项。",
     continue: "继续",

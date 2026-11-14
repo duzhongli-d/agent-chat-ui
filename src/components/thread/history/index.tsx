@@ -132,6 +132,7 @@ export default function ThreadHistory() {
           <SheetContent
             side="left"
             className="flex lg:hidden"
+            closeLabel={t("close")}
           >
             <SheetHeader>
               <SheetTitle>{t("threadHistory")}</SheetTitle>

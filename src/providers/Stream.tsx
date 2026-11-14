@@ -263,6 +263,8 @@ export const StreamProvider: React.FC<{ children: ReactNode }> = ({
                 defaultValue={apiKey ?? ""}
                 className="bg-background"
                 placeholder="lsv2_pt_..."
+                showLabel={t("showPassword")}
+                hideLabel={t("hidePassword")}
               />
             </div>
 
