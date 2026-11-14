@@ -44,4 +44,14 @@ export default tseslint.config(
       ],
     },
   },
+  {
+    // Next.js route modules legitimately export `generateMetadata`,
+    // `generateStaticParams`, `metadata`, `revalidate`, … next to their
+    // component. Fast Refresh does not apply to route files, so the rule only
+    // produces false positives there.
+    files: ["src/app/**/layout.tsx", "src/app/**/page.tsx"],
+    rules: {
+      "react-refresh/only-export-components": "off",
+    },
+  },
 );
