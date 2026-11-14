@@ -27,6 +27,7 @@ import { PasswordInput } from "@/components/ui/password-input";
 import { getApiKey, setApiKey as storeApiKey } from "@/lib/api-key";
 import { resolveApiUrl } from "@/lib/resolve-api-url";
 import { useThreads } from "./Thread";
+import { LanguageSwitcher } from "@/components/language-switcher";
 import { toast } from "sonner";
 
 export type StateType = { messages: Message[]; ui?: UIMessage[] };
@@ -181,6 +182,11 @@ export const StreamProvider: React.FC<{ children: ReactNode }> = ({
   if (!finalApiUrl || !finalAssistantId) {
     return (
       <div className="flex min-h-screen w-full items-center justify-center p-4">
+        {/* The setup card is centered, so the switcher lives in a fixed corner
+            where it cannot be pushed off-screen by the form. */}
+        <div className="fixed top-4 right-4 z-10">
+          <LanguageSwitcher />
+        </div>
         <div className="animate-in fade-in-0 zoom-in-95 bg-background flex max-w-3xl flex-col rounded-lg border shadow-lg">
           <div className="mt-14 flex flex-col gap-2 border-b p-6">
             <div className="flex flex-col items-start gap-2">
