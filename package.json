@@ -84,7 +84,8 @@
     "tailwind-scrollbar": "^4.0.2",
     "tailwindcss": "^4.3.5",
     "typescript": "~7.0.2",
-    "typescript-eslint": "^8.72.2"
+    "typescript-eslint": "^8.72.2",
+    "use-intl": "4.15.1"
   },
   "overrides": {
     "react-is": "^19.0.0-rc-69d4b800-20241021"
