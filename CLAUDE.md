@@ -19,11 +19,15 @@ pnpm format           # prettier --write .
 pnpm format:check    # what CI enforces
 ```
 
-There is **no test suite configured** — no jest/vitest/playwright config and no test files exist. `@playwright/test` is present in devDependencies but unused. The only automated checks are the three CI jobs in `.github/workflows/ci.yml`:
+There is **no test suite configured** — no jest/vitest/playwright config and no test files exist. `@playwright/test` is present in devDependencies but unused. The only automated checks are the five CI jobs in `.github/workflows/ci.yml`:
 
 1. `pnpm format:check` (Prettier)
 2. `pnpm lint` (ESLint)
-3. `codespell` over `README.md` and `src` (ignore list: `.codespellignore`, which whitelists `productionize`)
+3. `pnpm build` (Next.js build, which also runs `tsc`)
+4. `codespell` over `README.md`
+5. `codespell` over `src` (ignore list: `.codespellignore`, which whitelists `productionize`)
+
+Because the message catalogs live in `src/messages/`, job 5 spell-checks the English catalog too.
 
 ### The TypeScript shim (important)
 
@@ -39,7 +43,7 @@ Keep the value double-quoted. It contains a space, and `cross-env` would otherwi
 
 ## Architecture
 
-### Provider stack (`src/app/page.tsx`)
+### Provider stack (`src/app/[locale]/page.tsx`)
 
 The whole app is a single client page wrapped in three providers, in this order:
 
@@ -112,6 +116,86 @@ These are read from the README but enforced in the client, so keep them in sync 
 ### Multimodal input
 
 `src/hooks/use-file-upload.tsx` supports upload, drag-drop, and paste, all funneling through `fileToContentBlock()` (`src/lib/multimodal-utils.ts`) which base64-encodes into `ContentBlock.Multimodal.Data`. Supported types: `image/jpeg|png|gif|webp` and `application/pdf`. Duplicate detection keys off `metadata.name` (images) / `metadata.filename` (PDFs).
+
+## Internationalization
+
+The UI is bilingual: **English** (`en`) and **Simplified Chinese** (`zh-CN`). Built on
+`next-intl` v4 with locale-prefixed routing, so every page lives under `/en` or `/zh-CN`.
+
+```
+src/i18n/routing.ts      the locale list + detection policy (single source of truth)
+src/i18n/navigation.ts   locale-aware useRouter / usePathname
+src/i18n/request.ts      loads the catalog per request
+src/i18n/global.ts       augments next-intl's types so t() keys are checked at compile time
+src/proxy.ts             the next-intl middleware (Next 16 renamed middleware.ts -> proxy.ts)
+src/messages/en.ts       the English catalog — the source of truth for the *shape*
+src/messages/zh-CN.ts    the Chinese catalog (satisfies Messages, so the keys must match)
+```
+
+**The root layout is `src/app/[locale]/layout.tsx`.** There is no `src/app/layout.tsx` —
+Next.js allows only one `<html>` tag, so the root layout moved into the `[locale]` segment.
+`src/app/page.tsx` moved to `src/app/[locale]/page.tsx` for the same reason.
+
+### Adding a string
+
+1. Add the key to `src/messages/en.ts` under the right namespace.
+2. Add the matching key to `src/messages/zh-CN.ts`. **This is compiler-enforced** —
+   `zh-CN.ts` is `satisfies Messages`, and `Messages` is the English catalog with every
+   leaf widened to `string`. A missing or extra key fails `pnpm build`.
+3. Read it with `const t = useTranslations("<namespace>")` and `t("key")`.
+
+Namespaces: `app`, `setup`, `language`, `chat`, `history`, `messages`, `inbox`, `decisions`,
+`state`, `fileUpload`, `errors`.
+
+### Rules that are easy to get wrong
+
+- **Server-supplied keys stay English.** `action.name`, the keys of `actionRequest.args`,
+  and the state keys name _server_ concepts — translating them would desync the UI from the
+  graph's vocabulary. Only the app-owned closed enum `approve | edit | reject` is translated
+  (the `decisions` namespace).
+- **`src/lib/ensure-tool-responses.ts` stays English.** Its message carries the
+  `do-not-render-` prefix and is a wire-level payload that is never rendered.
+- **Pure modules cannot call hooks.** `useTranslations()` is a hook, so a plain `.ts` module
+  must return structured data, not a sentence. `agent-inbox/utils.ts` returns
+  `{ decision?, errorCode? }` and `lib/multimodal-utils.ts` returns a machine-readable reason;
+  the component maps the code to a message with `t(\`errors.${code}\`)`.
+- **Vendored shadcn primitives must not call `useTranslations()`.** `src/components/ui/` is
+  overwritten by the `shadcn` CLI. Primitives take an optional prop with an English default
+  instead (`SheetContent` takes `closeLabel`, `PasswordInput` takes `showLabel`/`hideLabel`),
+  and the call site passes the translated value.
+- **`t.rich()` — the tag is not the placeholder.** In `"<strong>{actionName}</strong>"`,
+  `strong` is the _tag_ (a function) and `actionName` is the _placeholder_ (a string):
+  `t.rich("key", { strong: (c) => <strong>{c}</strong>, actionName: "x" })`. Any `<tag>` in
+  a message is parsed as rich text, so those messages must be read with `t.rich()`, never `t()`.
+- **ICU pluralization** lives inside the message: `"{count, plural, one {# action} other {# actions}}"`.
+  Chinese has exactly one plural category, so `zh-CN` needs only the `other` branch.
+- **No `Accept-Language` detection.** `localeDetection: false` in `src/i18n/routing.ts` — the
+  app stays English until the user explicitly toggles it. `localeCookie: false` too: the URL is
+  the only source of truth for the locale.
+- **The locale switch must preserve the query string.** The app's whole configuration
+  (`apiUrl` / `assistantId` / `authScheme` / `threadId`) lives in the query string, so
+  `src/components/language-switcher.tsx` re-supplies it: `router.replace({ pathname, query }, { locale })`.
+  Note that `locale` is the **second** argument, and `usePathname()` drops the query.
+- **`Link` is intentionally not exported** from `src/i18n/navigation.ts`. The app has one
+  route, so nothing needs a localized link, and exporting it would pull a client component
+  into server trees and trip `react-refresh/only-export-components`.
+- **CJK typography.** No space between Chinese and Latin/numerals (`已处理第3个操作。`), full-width
+  punctuation, and product names stay in Latin script (`LangGraph`, `LangSmith API Key`).
+
+### Fonts
+
+`src/app/[locale]/layout.tsx` loads Inter (Latin) and Noto Sans SC (CJK) via `next/font/google`,
+each exposing a CSS **variable** (`--font-inter`, `--font-noto-sans-sc`) rather than a
+`className` — `className` _sets_ `font-family`, so two fonts cannot be chained that way. The
+stack is assembled in `src/app/globals.css` under `@theme inline`:
+
+```css
+--font-sans:
+  var(--font-inter), var(--font-noto-sans-sc), ui-sans-serif, system-ui,
+  sans-serif;
+```
+
+`inline` is required because the token references runtime-injected custom properties.
 
 ## Production deployment
 
