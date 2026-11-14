@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { TooltipIconButton } from "../tooltip-icon-button";
 import { AnimatePresence, motion } from "framer-motion";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
@@ -21,6 +22,7 @@ function ContentCopyable({
   disabled: boolean;
 }) {
   const [copied, setCopied] = useState(false);
+  const t = useTranslations("messages");
 
   const handleCopy = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     e.stopPropagation();
@@ -33,7 +35,7 @@ function ContentCopyable({
     <TooltipIconButton
       onClick={(e) => handleCopy(e)}
       variant="ghost"
-      tooltip="Copy content"
+      tooltip={t("copyContent")}
       disabled={disabled}
     >
       <AnimatePresence
@@ -134,6 +136,8 @@ export function CommandBar({
   handleRegenerate?: () => void;
   isLoading: boolean;
 }) {
+  const t = useTranslations("messages");
+
   if (isHumanMessage && isAiMessage) {
     throw new Error(
       "Can only set one of isHumanMessage or isAiMessage to true, not both.",
@@ -168,7 +172,7 @@ export function CommandBar({
       <div className="flex items-center gap-2">
         <TooltipIconButton
           disabled={isLoading}
-          tooltip="Cancel edit"
+          tooltip={t("cancelEdit")}
           variant="ghost"
           onClick={() => {
             setIsEditing(false);
@@ -178,7 +182,7 @@ export function CommandBar({
         </TooltipIconButton>
         <TooltipIconButton
           disabled={isLoading}
-          tooltip="Submit"
+          tooltip={t("submit")}
           variant="secondary"
           onClick={handleSubmitEdit}
         >
@@ -197,7 +201,7 @@ export function CommandBar({
       {isAiMessage && !!handleRegenerate && (
         <TooltipIconButton
           disabled={isLoading}
-          tooltip="Refresh"
+          tooltip={t("refresh")}
           variant="ghost"
           onClick={handleRegenerate}
         >
@@ -207,7 +211,7 @@ export function CommandBar({
       {showEdit && (
         <TooltipIconButton
           disabled={isLoading}
-          tooltip="Edit"
+          tooltip={t("edit")}
           variant="ghost"
           onClick={() => {
             setIsEditing?.(true);

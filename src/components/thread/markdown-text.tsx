@@ -7,6 +7,7 @@ import remarkGfm from "remark-gfm";
 import rehypeKatex from "rehype-katex";
 import remarkMath from "remark-math";
 import { FC, memo, useState } from "react";
+import { useTranslations } from "next-intl";
 import { CheckIcon, CopyIcon } from "lucide-react";
 import { SyntaxHighlighter } from "@/components/thread/syntax-highlighter";
 
@@ -41,6 +42,7 @@ const useCopyToClipboard = ({
 
 const CodeHeader: FC<CodeHeaderProps> = ({ language, code }) => {
   const { isCopied, copyToClipboard } = useCopyToClipboard();
+  const t = useTranslations("messages");
   const onCopy = () => {
     if (!code || isCopied) return;
     copyToClipboard(code);
@@ -50,7 +52,7 @@ const CodeHeader: FC<CodeHeaderProps> = ({ language, code }) => {
     <div className="flex items-center justify-between gap-4 rounded-t-lg bg-zinc-900 px-4 py-2 text-sm font-semibold text-white">
       <span className="lowercase [&>span]:text-xs">{language}</span>
       <TooltipIconButton
-        tooltip="Copy"
+        tooltip={t("copy")}
         onClick={onCopy}
       >
         {!isCopied && <CopyIcon />}

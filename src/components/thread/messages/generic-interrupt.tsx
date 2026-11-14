@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, ChevronUp } from "lucide-react";
@@ -45,6 +46,7 @@ export function GenericInterruptView({
   interrupt: Record<string, any> | Record<string, any>[];
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const t = useTranslations("messages");
 
   const contentStr = JSON.stringify(interrupt, null, 2);
   const contentLines = contentStr.split("\n");
@@ -68,7 +70,7 @@ export function GenericInterruptView({
       const strValue = JSON.stringify(value, null, 2);
       if (strValue.length > 100) {
         // Return plain text for truncated content instead of a JSON object
-        return `Truncated ${strValue.length} characters...`;
+        return t("truncated", { count: strValue.length });
       }
     }
 
@@ -95,7 +97,7 @@ export function GenericInterruptView({
     <div className="overflow-hidden rounded-lg border border-gray-200">
       <div className="border-b border-gray-200 bg-gray-50 px-4 py-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h3 className="font-medium text-gray-900">Human Interrupt</h3>
+          <h3 className="font-medium text-gray-900">{t("humanInterrupt")}</h3>
         </div>
       </div>
       <motion.div

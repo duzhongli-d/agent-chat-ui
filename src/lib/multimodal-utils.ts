@@ -1,5 +1,26 @@
 import { ContentBlock } from "@langchain/core/messages";
-import { toast } from "sonner";
+
+/**
+ * Why a file could not be turned into a content block.
+ *
+ * The reason is a stable code rather than a sentence because this module is a
+ * plain module: it cannot call the `useTranslations()` hook, so the wording
+ * lives in the `fileUpload` message namespace and is raised by the caller
+ * (`src/hooks/use-file-upload.tsx`).
+ */
+export type FileContentBlockErrorReason = "unsupported-type" | "unknown";
+
+export class FileContentBlockError extends Error {
+  readonly reason: FileContentBlockErrorReason;
+  readonly fileType: string;
+
+  constructor(reason: FileContentBlockErrorReason, fileType: string) {
+    super(`fileToContentBlock failed: ${reason} (${fileType})`);
+    this.name = "FileContentBlockError";
+    this.reason = reason;
+    this.fileType = fileType;
+  }
+}
 
 // Returns a Promise of a typed multimodal block for images or PDFs
 export async function fileToContentBlock(
@@ -14,10 +35,7 @@ export async function fileToContentBlock(
   const supportedFileTypes = [...supportedImageTypes, "application/pdf"];
 
   if (!supportedFileTypes.includes(file.type)) {
-    toast.error(
-      `Unsupported file type: ${file.type}. Supported types are: ${supportedFileTypes.join(", ")}`,
-    );
-    return Promise.reject(new Error(`Unsupported file type: ${file.type}`));
+    throw new FileContentBlockError("unsupported-type", file.type);
   }
 
   const data = await fileToBase64(file);

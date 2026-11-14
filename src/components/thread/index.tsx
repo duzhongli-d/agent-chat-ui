@@ -27,6 +27,7 @@ import { useQueryState, parseAsBoolean } from "nuqs";
 import { StickToBottom, useStickToBottomContext } from "use-stick-to-bottom";
 import ThreadHistory from "./history";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { Label } from "../ui/label";
 import { Switch } from "../ui/switch";
@@ -73,6 +74,7 @@ function StickyToBottomContent(props: {
 
 function ScrollToBottom(props: { className?: string }) {
   const { isAtBottom, scrollToBottom } = useStickToBottomContext();
+  const t = useTranslations("chat");
 
   if (isAtBottom) return null;
   return (
@@ -82,12 +84,14 @@ function ScrollToBottom(props: { className?: string }) {
       onClick={() => scrollToBottom()}
     >
       <ArrowDown className="h-4 w-4" />
-      <span>Scroll to bottom</span>
+      <span>{t("scrollToBottom")}</span>
     </Button>
   );
 }
 
 function OpenGitHubRepo() {
+  const t = useTranslations("chat");
+
   return (
     <TooltipProvider>
       <Tooltip>
@@ -104,7 +108,7 @@ function OpenGitHubRepo() {
           </a>
         </TooltipTrigger>
         <TooltipContent side="left">
-          <p>Open GitHub repo</p>
+          <p>{t("openGitHubRepo")}</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
@@ -112,6 +116,8 @@ function OpenGitHubRepo() {
 }
 
 function ConnectedHost({ apiUrl }: { apiUrl: string }) {
+  const t = useTranslations("chat");
+
   let host: string;
   try {
     host = new URL(apiUrl).host;
@@ -128,7 +134,7 @@ function ConnectedHost({ apiUrl }: { apiUrl: string }) {
           </span>
         </TooltipTrigger>
         <TooltipContent side="bottom">
-          <p>Connected to {apiUrl}</p>
+          <p>{t("connectedTo", { url: apiUrl })}</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
@@ -136,6 +142,8 @@ function ConnectedHost({ apiUrl }: { apiUrl: string }) {
 }
 
 export function Thread() {
+  const t = useTranslations("chat");
+  const tApp = useTranslations("app");
   const [artifactContext, setArtifactContext] = useArtifactContext();
   const [artifactOpen, closeArtifact] = useArtifactOpen();
 
@@ -190,10 +198,10 @@ export function Thread() {
 
       // Message is defined, and it has not been logged yet. Save it, and send the error
       lastError.current = message;
-      toast.error("An error occurred. Please try again.", {
+      toast.error(t("error"), {
         description: (
           <p>
-            <strong>Error:</strong> <code>{message}</code>
+            <strong>{t("errorLabel")}</strong> <code>{message}</code>
           </p>
         ),
         richColors: true,
@@ -202,7 +210,7 @@ export function Thread() {
     } catch {
       // no-op
     }
-  }, [stream.error]);
+  }, [stream.error, t]);
 
   // TODO: this should be part of the useStream hook
   const prevMessageLength = useRef(0);
@@ -389,7 +397,7 @@ export function Thread() {
                     height={32}
                   />
                   <span className="text-xl font-semibold tracking-tight">
-                    Agent Chat
+                    {tApp("title")}
                   </span>
                 </motion.button>
                 <ConnectedHost apiUrl={stream.apiUrl} />
@@ -402,7 +410,7 @@ export function Thread() {
                 <TooltipIconButton
                   size="lg"
                   className="p-4"
-                  tooltip="New thread"
+                  tooltip={t("newThread")}
                   variant="ghost"
                   onClick={() => setThreadId(null)}
                 >
@@ -463,7 +471,7 @@ export function Thread() {
                     <div className="flex items-center gap-3">
                       <LangGraphLogoSVG className="h-8 flex-shrink-0" />
                       <h1 className="text-2xl font-semibold tracking-tight">
-                        Agent Chat
+                        {tApp("title")}
                       </h1>
                     </div>
                   )}
@@ -504,7 +512,7 @@ export function Thread() {
                             form?.requestSubmit();
                           }
                         }}
-                        placeholder="Type your message..."
+                        placeholder={t("placeholder")}
                         className="field-sizing-content resize-none border-none bg-transparent p-3.5 pb-0 shadow-none ring-0 outline-none focus:ring-0 focus:outline-none"
                       />
 
@@ -520,7 +528,7 @@ export function Thread() {
                               htmlFor="render-tool-calls"
                               className="text-sm text-gray-600"
                             >
-                              Hide Tool Calls
+                              {t("hideToolCalls")}
                             </Label>
                           </div>
                         </div>
@@ -530,7 +538,7 @@ export function Thread() {
                         >
                           <Plus className="size-5 text-gray-600" />
                           <span className="text-sm text-gray-600">
-                            Upload PDF or Image
+                            {t("uploadFile")}
                           </span>
                         </Label>
                         <input
@@ -548,7 +556,7 @@ export function Thread() {
                             className="ml-auto"
                           >
                             <LoaderCircle className="h-4 w-4 animate-spin" />
-                            Cancel
+                            {t("cancel")}
                           </Button>
                         ) : (
                           <Button
@@ -559,7 +567,7 @@ export function Thread() {
                               (!input.trim() && contentBlocks.length === 0)
                             }
                           >
-                            Send
+                            {t("send")}
                           </Button>
                         )}
                       </div>

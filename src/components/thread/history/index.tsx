@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { useThreads } from "@/providers/Thread";
 import { Thread } from "@langchain/langgraph-sdk";
+import { useTranslations } from "next-intl";
 import { useEffect } from "react";
 
 import { getContentString } from "../utils";
@@ -76,6 +77,7 @@ function ThreadHistoryLoading() {
 }
 
 export default function ThreadHistory() {
+  const t = useTranslations("history");
   const isLargeScreen = useMediaQuery("(min-width: 1024px)");
   const [chatHistoryOpen, setChatHistoryOpen] = useQueryState(
     "chatHistoryOpen",
@@ -110,7 +112,7 @@ export default function ThreadHistory() {
             )}
           </Button>
           <h1 className="text-xl font-semibold tracking-tight">
-            Thread History
+            {t("threadHistory")}
           </h1>
         </div>
         {threadsLoading ? (
@@ -132,7 +134,7 @@ export default function ThreadHistory() {
             className="flex lg:hidden"
           >
             <SheetHeader>
-              <SheetTitle>Thread History</SheetTitle>
+              <SheetTitle>{t("threadHistory")}</SheetTitle>
             </SheetHeader>
             <ThreadList
               threads={threads}

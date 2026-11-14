@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslations } from "next-intl";
 import { File, X as XIcon } from "lucide-react";
 import { ContentBlock } from "@langchain/core/messages";
 import { cn } from "@/lib/utils";
@@ -18,6 +19,8 @@ export const MultimodalPreview: React.FC<MultimodalPreviewProps> = ({
   className,
   size = "md",
 }) => {
+  const t = useTranslations("fileUpload");
+
   // Image block
   if (
     block.type === "image" &&
@@ -32,7 +35,7 @@ export const MultimodalPreview: React.FC<MultimodalPreviewProps> = ({
       <div className={cn("relative inline-block", className)}>
         <Image
           src={url}
-          alt={String(block.metadata?.name || "uploaded image")}
+          alt={String(block.metadata?.name || t("uploadedImage"))}
           className={imgClass}
           width={size === "sm" ? 16 : size === "md" ? 32 : 48}
           height={size === "sm" ? 16 : size === "md" ? 32 : 48}
@@ -42,7 +45,7 @@ export const MultimodalPreview: React.FC<MultimodalPreviewProps> = ({
             type="button"
             className="absolute top-1 right-1 z-10 rounded-full bg-gray-500 text-white hover:bg-gray-700"
             onClick={onRemove}
-            aria-label="Remove image"
+            aria-label={t("removeImage")}
           >
             <XIcon className="h-4 w-4" />
           </button>
@@ -54,7 +57,7 @@ export const MultimodalPreview: React.FC<MultimodalPreviewProps> = ({
   // PDF block
   if (block.type === "file" && block.mimeType === "application/pdf") {
     const filename =
-      block.metadata?.filename || block.metadata?.name || "PDF file";
+      block.metadata?.filename || block.metadata?.name || t("pdfFile");
     return (
       <div
         className={cn(
@@ -81,7 +84,7 @@ export const MultimodalPreview: React.FC<MultimodalPreviewProps> = ({
             type="button"
             className="ml-2 self-start rounded-full bg-gray-200 p-1 text-teal-700 hover:bg-gray-300"
             onClick={onRemove}
-            aria-label="Remove PDF"
+            aria-label={t("removePdf")}
           >
             <XIcon className="h-4 w-4" />
           </button>
@@ -99,13 +102,13 @@ export const MultimodalPreview: React.FC<MultimodalPreviewProps> = ({
       )}
     >
       <File className="h-5 w-5 flex-shrink-0" />
-      <span className="truncate text-xs">Unsupported file type</span>
+      <span className="truncate text-xs">{t("unsupportedType")}</span>
       {removable && (
         <button
           type="button"
           className="ml-2 rounded-full bg-gray-200 p-1 text-gray-500 hover:bg-gray-300"
           onClick={onRemove}
-          aria-label="Remove file"
+          aria-label={t("removeFile")}
         >
           <XIcon className="h-4 w-4" />
         </button>

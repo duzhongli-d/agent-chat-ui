@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, ChangeEvent } from "react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import { ContentBlock } from "@langchain/core/messages";
 import { fileToContentBlock } from "@/lib/multimodal-utils";
 
@@ -20,6 +21,7 @@ export function useFileUpload({
 }: UseFileUploadOptions = {}) {
   const [contentBlocks, setContentBlocks] =
     useState<ContentBlock.Multimodal.Data[]>(initialBlocks);
+  const t = useTranslations("fileUpload");
   const dropRef = useRef<HTMLDivElement>(null);
   const [dragOver, setDragOver] = useState(false);
   const dragCounter = useRef(0);
@@ -62,13 +64,11 @@ export function useFileUpload({
     );
 
     if (invalidFiles.length > 0) {
-      toast.error(
-        "You have uploaded invalid file type. Please upload a JPEG, PNG, GIF, WEBP image or a PDF.",
-      );
+      toast.error(t("invalidType"));
     }
     if (duplicateFiles.length > 0) {
       toast.error(
-        `Duplicate file(s) detected: ${duplicateFiles.map((f) => f.name).join(", ")}. Each file can only be uploaded once per message.`,
+        t("duplicate", { files: duplicateFiles.map((f) => f.name).join(", ") }),
       );
     }
 
@@ -122,13 +122,13 @@ export function useFileUpload({
       );
 
       if (invalidFiles.length > 0) {
-        toast.error(
-          "You have uploaded invalid file type. Please upload a JPEG, PNG, GIF, WEBP image or a PDF.",
-        );
+        toast.error(t("invalidType"));
       }
       if (duplicateFiles.length > 0) {
         toast.error(
-          `Duplicate file(s) detected: ${duplicateFiles.map((f) => f.name).join(", ")}. Each file can only be uploaded once per message.`,
+          t("duplicate", {
+            files: duplicateFiles.map((f) => f.name).join(", "),
+          }),
         );
       }
 
@@ -185,7 +185,7 @@ export function useFileUpload({
       window.removeEventListener("dragover", handleWindowDragOver);
       dragCounter.current = 0;
     };
-  }, [contentBlocks]);
+  }, [contentBlocks, t]);
 
   const removeBlock = (idx: number) => {
     setContentBlocks((prev) => prev.filter((_, i) => i !== idx));
@@ -242,13 +242,11 @@ export function useFileUpload({
     const duplicateFiles = validFiles.filter(isDuplicate);
     const uniqueFiles = validFiles.filter((file) => !isDuplicate(file));
     if (invalidFiles.length > 0) {
-      toast.error(
-        "You have pasted an invalid file type. Please paste a JPEG, PNG, GIF, WEBP image or a PDF.",
-      );
+      toast.error(t("pastedInvalidType"));
     }
     if (duplicateFiles.length > 0) {
       toast.error(
-        `Duplicate file(s) detected: ${duplicateFiles.map((f) => f.name).join(", ")}. Each file can only be uploaded once per message.`,
+        t("duplicate", { files: duplicateFiles.map((f) => f.name).join(", ") }),
       );
     }
     if (uniqueFiles.length > 0) {
