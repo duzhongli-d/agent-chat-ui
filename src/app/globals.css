@@ -76,6 +76,13 @@
 }
 
 @theme inline {
+  /* `inline` is required: the token references custom properties that
+     `next/font` injects at runtime. Inter comes first (Latin keeps the brand
+     look); Noto Sans SC second (CJK is absent from Inter, so the browser falls
+     through to it). */
+  --font-sans:
+    var(--font-inter), var(--font-noto-sans-sc), ui-sans-serif, system-ui,
+    sans-serif;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
