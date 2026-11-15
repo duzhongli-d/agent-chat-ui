@@ -295,6 +295,12 @@ export function Thread() {
         <motion.div
           className="absolute z-20 h-full overflow-hidden border-r bg-white"
           style={{ width: 300 }}
+          // The panel is translated off-screen rather than unmounted, so while
+          // it is closed its toggle, heading and thread list would stay in the
+          // accessibility tree — a second "Show thread history" button next to
+          // the visible one in the chat header. `inert` takes the whole subtree
+          // out of the tree and out of the tab order while it is off-screen.
+          inert={!chatHistoryOpen}
           animate={
             isLargeScreen
               ? { x: chatHistoryOpen ? 0 : -300 }
