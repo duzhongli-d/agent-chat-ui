@@ -145,6 +145,7 @@ function ConnectedHost({ apiUrl }: { apiUrl: string }) {
 export function Thread() {
   const t = useTranslations("chat");
   const tApp = useTranslations("app");
+  const tHistory = useTranslations("history");
   const [artifactContext, setArtifactContext] = useArtifactContext();
   const [artifactOpen, closeArtifact] = useArtifactOpen();
 
@@ -345,9 +346,12 @@ export function Thread() {
             <div className="absolute top-0 left-0 z-10 flex w-full items-center justify-between gap-3 p-2 pl-4">
               <div>
                 {(!chatHistoryOpen || !isLargeScreen) && (
-                  <Button
-                    className="hover:bg-gray-100"
-                    variant="ghost"
+                  <TooltipIconButton
+                    className="size-9 hover:bg-gray-100"
+                    tooltip={tHistory(
+                      chatHistoryOpen ? "hideHistory" : "showHistory",
+                    )}
+                    aria-expanded={!!chatHistoryOpen}
                     onClick={() => setChatHistoryOpen((p) => !p)}
                   >
                     {chatHistoryOpen ? (
@@ -355,7 +359,7 @@ export function Thread() {
                     ) : (
                       <PanelRightClose className="size-5" />
                     )}
-                  </Button>
+                  </TooltipIconButton>
                 )}
               </div>
               <div className="absolute top-2 right-4 flex items-center gap-2">
@@ -369,9 +373,12 @@ export function Thread() {
               <div className="relative flex items-center justify-start gap-2">
                 <div className="absolute left-0 z-10">
                   {(!chatHistoryOpen || !isLargeScreen) && (
-                    <Button
-                      className="hover:bg-gray-100"
-                      variant="ghost"
+                    <TooltipIconButton
+                      className="size-9 hover:bg-gray-100"
+                      tooltip={tHistory(
+                        chatHistoryOpen ? "hideHistory" : "showHistory",
+                      )}
+                      aria-expanded={!!chatHistoryOpen}
                       onClick={() => setChatHistoryOpen((p) => !p)}
                     >
                       {chatHistoryOpen ? (
@@ -379,7 +386,7 @@ export function Thread() {
                       ) : (
                         <PanelRightClose className="size-5" />
                       )}
-                    </Button>
+                    </TooltipIconButton>
                   )}
                 </div>
                 <motion.button

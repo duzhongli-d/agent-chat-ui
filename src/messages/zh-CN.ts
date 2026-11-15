@@ -68,6 +68,8 @@ export const zhCN = {
   history: {
     threadHistory: "会话历史",
     close: "关闭",
+    showHistory: "显示会话历史",
+    hideHistory: "隐藏会话历史",
   },
   messages: {
     copyContent: "复制内容",

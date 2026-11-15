@@ -58,6 +58,8 @@ export const en = {
   history: {
     threadHistory: "Thread History",
     close: "Close",
+    showHistory: "Show thread history",
+    hideHistory: "Hide thread history",
   },
   messages: {
     copyContent: "Copy content",

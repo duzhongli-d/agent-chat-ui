@@ -3,6 +3,7 @@ import { useThreads } from "@/providers/Thread";
 import { Thread } from "@langchain/langgraph-sdk";
 import { useTranslations } from "next-intl";
 import { useEffect } from "react";
+import { TooltipIconButton } from "@/components/thread/tooltip-icon-button";
 
 import { getContentString } from "../utils";
 import { useQueryState, parseAsBoolean } from "nuqs";
@@ -100,9 +101,10 @@ export default function ThreadHistory() {
     <>
       <div className="shadow-inner-right hidden h-screen w-[300px] shrink-0 flex-col items-start justify-start gap-6 border-r-[1px] border-slate-300 lg:flex">
         <div className="flex w-full items-center justify-between px-4 pt-1.5">
-          <Button
-            className="hover:bg-gray-100"
-            variant="ghost"
+          <TooltipIconButton
+            className="size-9 hover:bg-gray-100"
+            tooltip={t(chatHistoryOpen ? "hideHistory" : "showHistory")}
+            aria-expanded={!!chatHistoryOpen}
             onClick={() => setChatHistoryOpen((p) => !p)}
           >
             {chatHistoryOpen ? (
@@ -110,7 +112,7 @@ export default function ThreadHistory() {
             ) : (
               <PanelRightClose className="size-5" />
             )}
-          </Button>
+          </TooltipIconButton>
           <h1 className="text-xl font-semibold tracking-tight">
             {t("threadHistory")}
           </h1>
